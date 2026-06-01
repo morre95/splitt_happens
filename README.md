@@ -1,4 +1,4 @@
-# split_happens
+# Split Happens
 
 A new Flutter project.
 
