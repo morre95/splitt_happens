@@ -53,10 +53,19 @@ class Settings extends _$Settings {
         await _secureStorage.read(key: SettingsKeys.apiKey) ?? '';
     return AppSettings(
       apiKey: apiKey,
-      model: prefs.getString(SettingsKeys.model) ?? SettingsDefaults.model,
+      model: _resolveModel(prefs.getString(SettingsKeys.model)),
       currency:
           prefs.getString(SettingsKeys.currency) ?? SettingsDefaults.currency,
     );
+  }
+
+  /// Returns [stored] only if it is still a known model; otherwise falls back
+  /// to the default. This keeps the settings dropdown valid when a previously
+  /// saved model id is renamed or removed from [OpenRouterConfig.availableModels].
+  String _resolveModel(String? stored) {
+    return OpenRouterConfig.availableModels.contains(stored)
+        ? stored!
+        : SettingsDefaults.model;
   }
 
   /// Updates [state] by applying [apply] to the current settings.
