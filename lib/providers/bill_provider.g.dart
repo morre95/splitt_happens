@@ -63,7 +63,7 @@ final savedBillsProvider = AutoDisposeFutureProvider<List<Bill>>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef SavedBillsRef = AutoDisposeFutureProviderRef<List<Bill>>;
-String _$billControllerHash() => r'0207443d1770ab4f5cbc99f4e97c28eeafaf991c';
+String _$billControllerHash() => r'f1c60c26cd452db805b2c997d1b2d9a9f191fef8';
 
 /// Drives a single receipt-splitting session through its lifecycle:
 /// `idle → scanning → reviewing → assigning → summarised`.
