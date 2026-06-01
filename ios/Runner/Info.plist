@@ -4,6 +4,10 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Split Happens uses the camera to photograph receipts for splitting.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Split Happens needs access to your photos to import a receipt image.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

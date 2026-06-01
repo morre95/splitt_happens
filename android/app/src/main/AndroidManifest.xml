@@ -1,4 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required to capture receipt photos with the camera. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <!-- The camera is used for an optional feature, so don't exclude devices
+         without one (gallery picking still works). -->
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+
     <application
         android:label="split_happens"
         android:name="${applicationName}"
@@ -30,6 +36,11 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Pre-download the ML Kit on-device latin OCR model when the app is
+             installed, so receipt scanning works the first time, offline. -->
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="ocr" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
