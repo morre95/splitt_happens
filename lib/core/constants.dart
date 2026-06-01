@@ -13,12 +13,12 @@ class OpenRouterConfig {
       'https://openrouter.ai/api/v1/chat/completions';
 
   /// Default model used to parse receipts. Cheap and fast.
-  static const String defaultModel = 'google/gemini-flash-1.5';
+  static const String defaultModel = 'google/gemini-2.5-flash-lite';
 
   /// Models offered in the settings dropdown.
   static const List<String> availableModels = <String>[
-    'google/gemini-flash-1.5',
-    'openai/gpt-4o-mini',
+    'google/gemini-2.5-flash-lite',
+    'openai/gpt-5.4-nano',
     'anthropic/claude-haiku-4-5',
   ];
 
