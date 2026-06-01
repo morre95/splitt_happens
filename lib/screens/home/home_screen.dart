@@ -38,16 +38,50 @@ class HomeScreen extends ConsumerWidget {
             list.isEmpty ? const _EmptyState() : _BillList(bills: list),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          ref.read(billControllerProvider.notifier).reset();
-          context.push(Routes.scan);
-        },
-        icon: const Icon(Icons.camera_alt),
+        onPressed: () => _startNewBill(context, ref),
+        icon: const Icon(Icons.add),
         label: const Text('New bill'),
       ),
     );
   }
+
+  /// Offers the two ways to start a bill: scanning a receipt or entering one
+  /// by hand. Both reset the current bill first; manual entry skips the
+  /// camera/OCR pipeline and opens the editable review screen directly.
+  Future<void> _startNewBill(BuildContext context, WidgetRef ref) async {
+    final _NewBillChoice? choice = await showModalBottomSheet<_NewBillChoice>(
+      context: context,
+      builder: (BuildContext context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Scan a receipt'),
+              subtitle: const Text('Capture or pick a photo to read items'),
+              onTap: () => Navigator.of(context).pop(_NewBillChoice.scan),
+            ),
+            ListTile(
+              leading: const Icon(Icons.edit_note),
+              title: const Text('Enter manually'),
+              subtitle: const Text('Type items and amounts yourself'),
+              onTap: () => Navigator.of(context).pop(_NewBillChoice.manual),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (choice == null || !context.mounted) return;
+    ref.read(billControllerProvider.notifier).reset();
+    context.push(
+      choice == _NewBillChoice.scan ? Routes.scan : Routes.review,
+    );
+  }
 }
+
+/// How the user chose to start a new bill.
+enum _NewBillChoice { scan, manual }
 
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
