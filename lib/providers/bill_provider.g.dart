@@ -63,7 +63,7 @@ final savedBillsProvider = AutoDisposeFutureProvider<List<Bill>>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef SavedBillsRef = AutoDisposeFutureProviderRef<List<Bill>>;
-String _$billControllerHash() => r'75d4c2aa4c390d98df46f5eae326e852644287f3';
+String _$billControllerHash() => r'bc570565d6c8ec4b1dbd2b2a1cde5a8f9c36369b';
 
 /// Drives a single receipt-splitting session through its lifecycle:
 /// `idle → scanning → reviewing → assigning → summarised`.
@@ -77,7 +77,7 @@ String _$billControllerHash() => r'75d4c2aa4c390d98df46f5eae326e852644287f3';
 /// Copied from [BillController].
 @ProviderFor(BillController)
 final billControllerProvider =
-    AutoDisposeAsyncNotifierProvider<BillController, Bill>.internal(
+    AsyncNotifierProvider<BillController, Bill>.internal(
       BillController.new,
       name: r'billControllerProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -87,6 +87,6 @@ final billControllerProvider =
       allTransitiveDependencies: null,
     );
 
-typedef _$BillController = AutoDisposeAsyncNotifier<Bill>;
+typedef _$BillController = AsyncNotifier<Bill>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

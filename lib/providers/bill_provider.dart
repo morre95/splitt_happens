@@ -55,7 +55,7 @@ Future<List<Bill>> savedBills(Ref ref) {
 /// * **reviewing / assigning / summarised** — `AsyncData`, distinguished by
 ///   the active route;
 /// * pipeline failures surface as `AsyncError`.
-@riverpod
+@Riverpod(keepAlive: true)
 class BillController extends _$BillController {
   double _parsedSubtotal = 0;
 
