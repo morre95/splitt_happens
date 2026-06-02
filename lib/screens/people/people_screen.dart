@@ -48,7 +48,7 @@ class _PeopleScreenState extends ConsumerState<PeopleScreen> {
           TextButton(
             onPressed: bill.people.isEmpty
                 ? null
-                : () => context.push(Routes.assign),
+                : () => context.push(Routes.payments),
             child: const Text('Next'),
           ),
         ],
@@ -96,6 +96,17 @@ class _PeopleScreenState extends ConsumerState<PeopleScreen> {
                       ),
                     ),
             ),
+            if (bill.people.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => context.push(Routes.assign),
+                  icon: const Icon(Icons.tune),
+                  label: const Text('Assign items individually'),
+                ),
+              ),
+            ],
           ],
         ),
       ),

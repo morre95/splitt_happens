@@ -120,11 +120,17 @@ class BillController extends _$BillController {
 
   void _set(Bill bill) => state = AsyncData<Bill>(bill);
 
-  /// Adds a new manual item to the bill.
+  /// Adds a new manual item to the bill, split equally among everyone by
+  /// default. (Usually there are no people yet when items are added, in which
+  /// case it simply starts unassigned.)
   void addItem(Item item) {
     final Bill? bill = _bill;
     if (bill == null) return;
-    _set(bill.copyWith(items: <Item>[...bill.items, item]));
+    final Set<String> everyone = bill.people.map((Person p) => p.id).toSet();
+    _set(bill.copyWith(
+      items: <Item>[...bill.items, item],
+      splits: <Split>[...bill.splits, ..._equalSplits(item.id, everyone)],
+    ));
   }
 
   /// Replaces an existing item (matched by id) with [item].
@@ -150,6 +156,11 @@ class BillController extends _$BillController {
   }
 
   /// Adds a person with the given [name], assigning the next palette colour.
+  ///
+  /// By default the new person shares every item: they are added to each
+  /// item's existing sharer set and the portions are rebalanced. This keeps
+  /// "everyone splits everything" as the default while preserving any per-item
+  /// customisation made on the assign screen.
   void addPerson(String name) {
     final Bill? bill = _bill;
     if (bill == null) return;
@@ -157,7 +168,23 @@ class BillController extends _$BillController {
         _avatarPalette[bill.people.length % _avatarPalette.length];
     final Person person =
         Person(id: _uuid.v4(), name: name, avatarColor: color);
-    _set(bill.copyWith(people: <Person>[...bill.people, person]));
+
+    final Map<String, Set<String>> sharersByItem = <String, Set<String>>{};
+    for (final Split s in bill.splits) {
+      sharersByItem.putIfAbsent(s.itemId, () => <String>{}).add(s.personId);
+    }
+    final List<Split> splits = <Split>[
+      for (final Item item in bill.items)
+        ..._equalSplits(
+          item.id,
+          <String>{...?sharersByItem[item.id], person.id},
+        ),
+    ];
+
+    _set(bill.copyWith(
+      people: <Person>[...bill.people, person],
+      splits: splits,
+    ));
   }
 
   /// Removes the person with [id] and any splits they own, rebalancing the
