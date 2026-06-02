@@ -116,6 +116,49 @@ class BillController extends _$BillController {
     });
   }
 
+  /// Runs the OCR + LLM parse pipeline on [image] and appends the extracted
+  /// items to the current bill (keeping existing items, people, and splits).
+  /// New items are split equally among everyone, and the receipt's tax/tip are
+  /// added to the running totals. Throws on pipeline failure, leaving the
+  /// current bill untouched.
+  Future<void> appendScan(File image) async {
+    final Bill? current = _bill;
+    if (current == null) return;
+
+    final AppSettings settings = await ref.read(settingsProvider.future);
+    final String ocrText = await ref.read(ocrTextProvider(image).future);
+    final ReceiptParserService parser =
+        ReceiptParserService(model: settings.model);
+    final ReceiptParseResult parsed =
+        await parser.parse(ocrText, settings.apiKey);
+
+    // The full-bill subtotal warning compares against a single scan, so it no
+    // longer applies once items from another receipt are mixed in.
+    _parsedSubtotal = 0;
+
+    final Set<String> everyone =
+        current.people.map((Person p) => p.id).toSet();
+    final List<Item> newItems = <Item>[];
+    final List<Split> newSplits = <Split>[];
+    for (final ParsedItem p in parsed.items) {
+      final Item item = Item(
+        id: _uuid.v4(),
+        name: p.name,
+        quantity: p.quantity,
+        unitPrice: p.unitPrice,
+      );
+      newItems.add(item);
+      newSplits.addAll(_equalSplits(item.id, everyone));
+    }
+
+    _set(current.copyWith(
+      items: <Item>[...current.items, ...newItems],
+      splits: <Split>[...current.splits, ...newSplits],
+      taxAmount: current.taxAmount + parsed.tax,
+      tipAmount: current.tipAmount + parsed.tip,
+    ));
+  }
+
   Bill? get _bill => state.valueOrNull;
 
   void _set(Bill bill) => state = AsyncData<Bill>(bill);

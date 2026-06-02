@@ -15,7 +15,14 @@ import 'image_review_widget.dart';
 /// OCR + LLM parse pipeline behind a loading overlay.
 class ScanScreen extends ConsumerStatefulWidget {
   /// Creates a [ScanScreen].
-  const ScanScreen({super.key});
+  ///
+  /// When [append] is true the scanned items are added to the current bill and
+  /// the screen pops back; otherwise the scan starts a fresh bill and continues
+  /// to the review screen.
+  const ScanScreen({this.append = false, super.key});
+
+  /// Whether to append to the current bill instead of replacing it.
+  final bool append;
 
   @override
   ConsumerState<ScanScreen> createState() => _ScanScreenState();
@@ -84,6 +91,11 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     if (image == null) return;
     setState(() => _processing = true);
 
+    if (widget.append) {
+      await _processAppend(image);
+      return;
+    }
+
     await ref.read(billControllerProvider.notifier).startScan(image);
     if (!mounted) return;
 
@@ -93,15 +105,30 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     result.when(
       data: (_) => context.go(Routes.review),
       loading: () {},
-      error: (Object error, _) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_messageFor(error)),
-            action: SnackBarAction(label: 'Retry', onPressed: _process),
-            duration: const Duration(seconds: 6),
-          ),
-        );
-      },
+      error: (Object error, _) => _showError(error),
+    );
+  }
+
+  Future<void> _processAppend(File image) async {
+    try {
+      await ref.read(billControllerProvider.notifier).appendScan(image);
+      if (!mounted) return;
+      setState(() => _processing = false);
+      context.pop();
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() => _processing = false);
+      _showError(error);
+    }
+  }
+
+  void _showError(Object error) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(_messageFor(error)),
+        action: SnackBarAction(label: 'Retry', onPressed: _process),
+        duration: const Duration(seconds: 6),
+      ),
     );
   }
 

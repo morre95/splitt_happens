@@ -12,6 +12,9 @@ import 'item_edit_tile.dart';
 
 const Uuid _uuid = Uuid();
 
+/// How the user chose to add to the bill from the review screen.
+enum _AddChoice { scan, manual }
+
 /// Editable list of parsed items with a totals summary and a validation
 /// warning when the items no longer match the parsed subtotal.
 class ReviewItemsScreen extends ConsumerWidget {
@@ -86,12 +89,48 @@ class ReviewItemsScreen extends ConsumerWidget {
       bottomNavigationBar:
           _SummaryRow(bill: bill, onEditTaxTip: () => _editTaxTip(context, ref)),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => controller.addItem(
-          Item(id: _uuid.v4(), name: 'New item', unitPrice: 0),
-        ),
+        onPressed: () => _showAddOptions(context, controller),
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  /// Offers two ways to add to the bill: scanning a receipt (its items are
+  /// appended to the current bill) or typing an item by hand.
+  Future<void> _showAddOptions(
+      BuildContext context, BillController controller) async {
+    final _AddChoice? choice = await showModalBottomSheet<_AddChoice>(
+      context: context,
+      builder: (BuildContext context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Scan a receipt'),
+              subtitle: const Text('Add items from a photo'),
+              onTap: () => Navigator.of(context).pop(_AddChoice.scan),
+            ),
+            ListTile(
+              leading: const Icon(Icons.edit_note),
+              title: const Text('Add item manually'),
+              subtitle: const Text('Type an item yourself'),
+              onTap: () => Navigator.of(context).pop(_AddChoice.manual),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (choice == null || !context.mounted) return;
+    switch (choice) {
+      case _AddChoice.scan:
+        context.push(Routes.scan, extra: true);
+      case _AddChoice.manual:
+        controller.addItem(
+          Item(id: _uuid.v4(), name: 'New item', unitPrice: 0),
+        );
+    }
   }
 
   Future<void> _editTaxTip(BuildContext context, WidgetRef ref) async {

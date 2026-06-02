@@ -35,7 +35,7 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: Routes.scan,
       builder: (BuildContext context, GoRouterState state) =>
-          const ScanScreen(),
+          ScanScreen(append: state.extra == true),
     ),
     GoRoute(
       path: Routes.review,
