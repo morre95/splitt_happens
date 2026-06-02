@@ -170,6 +170,8 @@ class BillController extends _$BillController {
     _set(bill.copyWith(
       people: bill.people.where((Person p) => p.id != id).toList(),
       splits: _rebalanceAll(remaining),
+      payments:
+          bill.payments.where((Payment p) => p.personId != id).toList(),
     ));
   }
 
@@ -220,6 +222,25 @@ class BillController extends _$BillController {
         ..._equalSplits(item.id, everyone),
     ];
     _set(bill.copyWith(splits: splits));
+  }
+
+  /// Records that [personId] paid [amount] towards the bill, replacing any
+  /// previous amount for that person. A non-positive [amount] removes their
+  /// payment entirely.
+  void setPayment(String personId, double amount) {
+    final Bill? bill = _bill;
+    if (bill == null) return;
+    final List<Payment> others = bill.payments
+        .where((Payment p) => p.personId != personId)
+        .toList();
+    _set(bill.copyWith(
+      payments: amount <= 0
+          ? others
+          : <Payment>[
+              ...others,
+              Payment(personId: personId, amount: amount),
+            ],
+    ));
   }
 
   /// Sets the bill's [tax] and [tip] amounts.

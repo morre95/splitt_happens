@@ -8,7 +8,7 @@ part 'bill_dao.g.dart';
 
 /// Data-access object for reading and writing complete [Bill] aggregates
 /// (the bill plus its items, people, and splits).
-@DriftAccessor(tables: <Type>[Bills, Items, People, Splits])
+@DriftAccessor(tables: <Type>[Bills, Items, People, Splits, Payments])
 class BillDao extends DatabaseAccessor<AppDatabase> with _$BillDaoMixin {
   /// Creates a [BillDao] bound to [db].
   BillDao(super.db);
@@ -23,6 +23,8 @@ class BillDao extends DatabaseAccessor<AppDatabase> with _$BillDaoMixin {
           .go();
       await (delete(splits)..where((Splits t) => t.billId.equals(bill.id)))
           .go();
+      await (delete(payments)..where((Payments t) => t.billId.equals(bill.id)))
+          .go();
 
       await batch((Batch batch) {
         batch.insertAll(
@@ -36,6 +38,10 @@ class BillDao extends DatabaseAccessor<AppDatabase> with _$BillDaoMixin {
         batch.insertAll(
           splits,
           bill.splits.map((Split s) => _splitToRow(bill.id, s)),
+        );
+        batch.insertAll(
+          payments,
+          bill.payments.map((Payment p) => _paymentToRow(bill.id, p)),
         );
       });
     });
@@ -64,6 +70,7 @@ class BillDao extends DatabaseAccessor<AppDatabase> with _$BillDaoMixin {
   Future<void> deleteBill(String id) {
     return transaction(() async {
       await (delete(splits)..where((Splits t) => t.billId.equals(id))).go();
+      await (delete(payments)..where((Payments t) => t.billId.equals(id))).go();
       await (delete(items)..where((Items t) => t.billId.equals(id))).go();
       await (delete(people)..where((People t) => t.billId.equals(id))).go();
       await (delete(bills)..where((Bills t) => t.id.equals(id))).go();
@@ -79,6 +86,9 @@ class BillDao extends DatabaseAccessor<AppDatabase> with _$BillDaoMixin {
             .get();
     final List<SplitRow> splitRows =
         await (select(splits)..where((Splits t) => t.billId.equals(row.id)))
+            .get();
+    final List<PaymentRow> paymentRows =
+        await (select(payments)..where((Payments t) => t.billId.equals(row.id)))
             .get();
 
     return Bill(
@@ -109,6 +119,12 @@ class BillDao extends DatabaseAccessor<AppDatabase> with _$BillDaoMixin {
                 itemId: s.itemId,
                 portionNumerator: s.portionNumerator,
                 portionDenominator: s.portionDenominator,
+              ))
+          .toList(),
+      payments: paymentRows
+          .map((PaymentRow p) => Payment(
+                personId: p.personId,
+                amount: p.amount,
               ))
           .toList(),
     );
@@ -147,5 +163,13 @@ class BillDao extends DatabaseAccessor<AppDatabase> with _$BillDaoMixin {
         personId: split.personId,
         portionNumerator: split.portionNumerator,
         portionDenominator: split.portionDenominator,
+      );
+
+  PaymentsCompanion _paymentToRow(String billId, Payment payment) =>
+      PaymentsCompanion.insert(
+        id: '$billId:${payment.personId}',
+        billId: billId,
+        personId: payment.personId,
+        amount: payment.amount,
       );
 }

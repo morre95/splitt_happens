@@ -7,6 +7,7 @@ import '../../app.dart';
 import '../../core/money.dart';
 import '../../models/bill.dart';
 import '../../providers/bill_provider.dart';
+import '../../widgets/warning_banner.dart';
 import 'item_edit_tile.dart';
 
 const Uuid _uuid = Uuid();
@@ -48,7 +49,7 @@ class ReviewItemsScreen extends ConsumerWidget {
       body: Column(
         children: <Widget>[
           if (mismatch)
-            _WarningBanner(
+            WarningBanner(
               text: 'Items total ${formatMoney(bill.subtotal, bill.currency)} '
                   'but the receipt subtotal was '
                   '${formatMoney(parsedSubtotal, bill.currency)}.',
@@ -142,33 +143,6 @@ class ReviewItemsScreen extends ConsumerWidget {
     }
     taxCtrl.dispose();
     tipCtrl.dispose();
-  }
-}
-
-class _WarningBanner extends StatelessWidget {
-  const _WarningBanner({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      color: Colors.amber.shade100,
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        children: <Widget>[
-          Icon(Icons.warning_amber, color: Colors.amber.shade900),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(color: Colors.amber.shade900),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 

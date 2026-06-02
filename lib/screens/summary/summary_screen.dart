@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart' hide Split;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../app.dart';
 import '../../core/money.dart';
 import '../../models/bill.dart';
 import '../../providers/bill_provider.dart';
+import '../../services/settlement_calculator.dart';
 import '../../services/split_calculator.dart';
 import 'person_summary_card.dart';
+import 'settlement_section.dart';
 
 /// Final per-person breakdown with grand total, plus share-as-text and
 /// export-to-PDF actions.
@@ -18,6 +22,7 @@ class SummaryScreen extends ConsumerWidget {
   const SummaryScreen({super.key});
 
   static const SplitCalculator _calculator = SplitCalculator();
+  static const SettlementCalculator _settlement = SettlementCalculator();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -26,7 +31,19 @@ class SummaryScreen extends ConsumerWidget {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    final List<PersonBreakdown> breakdowns = _buildBreakdowns(bill);
+    final Map<String, double> owed = _calculator.calculate(
+      items: bill.items,
+      splits: bill.splits,
+      taxAmount: bill.taxAmount,
+      tipAmount: bill.tipAmount,
+    );
+    final List<PersonBreakdown> breakdowns = _buildBreakdowns(bill, owed);
+    final List<Transfer> transfers = _settlement.settle(
+      owed: owed,
+      paid: <String, double>{
+        for (final Payment p in bill.payments) p.personId: p.amount,
+      },
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -44,10 +61,16 @@ class SummaryScreen extends ConsumerWidget {
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              children: breakdowns
-                  .map((PersonBreakdown b) =>
-                      PersonSummaryCard(breakdown: b, currency: bill.currency))
-                  .toList(),
+              children: <Widget>[
+                ...breakdowns.map((PersonBreakdown b) =>
+                    PersonSummaryCard(breakdown: b, currency: bill.currency)),
+                SettlementSection(
+                  transfers: transfers,
+                  people: bill.people,
+                  currency: bill.currency,
+                  onAddPayments: () => context.push(Routes.payments),
+                ),
+              ],
             ),
           ),
           _GrandTotalBar(bill: bill),
@@ -60,7 +83,7 @@ class SummaryScreen extends ConsumerWidget {
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () =>
-                          _shareText(bill, breakdowns),
+                          _shareText(bill, breakdowns, transfers),
                       icon: const Icon(Icons.share),
                       label: const Text('Share as text'),
                     ),
@@ -68,7 +91,7 @@ class SummaryScreen extends ConsumerWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: FilledButton.icon(
-                      onPressed: () => _exportPdf(bill, breakdowns),
+                      onPressed: () => _exportPdf(bill, breakdowns, transfers),
                       icon: const Icon(Icons.picture_as_pdf),
                       label: const Text('Export PDF'),
                     ),
@@ -83,13 +106,8 @@ class SummaryScreen extends ConsumerWidget {
   }
 
   /// Computes each person's item shares, prorated tax/tip, and final total.
-  List<PersonBreakdown> _buildBreakdowns(Bill bill) {
-    final Map<String, double> totals = _calculator.calculate(
-      items: bill.items,
-      splits: bill.splits,
-      taxAmount: bill.taxAmount,
-      tipAmount: bill.tipAmount,
-    );
+  /// [totals] is the authoritative owed map from [SplitCalculator].
+  List<PersonBreakdown> _buildBreakdowns(Bill bill, Map<String, double> totals) {
     final Map<String, Item> itemsById = <String, Item>{
       for (final Item i in bill.items) i.id: i,
     };
@@ -133,7 +151,11 @@ class SummaryScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _shareText(Bill bill, List<PersonBreakdown> breakdowns) {
+  Future<void> _shareText(Bill bill, List<PersonBreakdown> breakdowns,
+      List<Transfer> transfers) {
+    final Map<String, Person> byId = <String, Person>{
+      for (final Person p in bill.people) p.id: p,
+    };
     final StringBuffer buffer = StringBuffer()
       ..writeln(bill.name)
       ..writeln('—' * 20);
@@ -145,10 +167,24 @@ class SummaryScreen extends ConsumerWidget {
     buffer
       ..writeln('—' * 20)
       ..writeln('Total: ${formatMoney(bill.total, bill.currency)}');
+    if (transfers.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln('Settle up:');
+      for (final Transfer t in transfers) {
+        buffer.writeln('${byId[t.fromPersonId]?.name ?? '?'} → '
+            '${byId[t.toPersonId]?.name ?? '?'}: '
+            '${formatMoney(t.amount, bill.currency)}');
+      }
+    }
     return Share.share(buffer.toString(), subject: bill.name);
   }
 
-  Future<void> _exportPdf(Bill bill, List<PersonBreakdown> breakdowns) {
+  Future<void> _exportPdf(Bill bill, List<PersonBreakdown> breakdowns,
+      List<Transfer> transfers) {
+    final Map<String, Person> byId = <String, Person>{
+      for (final Person p in bill.people) p.id: p,
+    };
     final pw.Document doc = pw.Document();
     doc.addPage(
       pw.MultiPage(
@@ -185,6 +221,18 @@ class SummaryScreen extends ConsumerWidget {
             'Grand total: ${formatMoney(bill.total, bill.currency)}',
             style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
           ),
+          if (transfers.isNotEmpty) ...<pw.Widget>[
+            pw.SizedBox(height: 16),
+            pw.Text(
+              'Settle up',
+              style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
+            ),
+            ...transfers.map((Transfer t) => pw.Text(
+                  '${byId[t.fromPersonId]?.name ?? '?'} → '
+                  '${byId[t.toPersonId]?.name ?? '?'}: '
+                  '${formatMoney(t.amount, bill.currency)}',
+                )),
+          ],
         ],
       ),
     );

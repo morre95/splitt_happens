@@ -101,9 +101,28 @@ class Splits extends Table {
   Set<Column<Object>> get primaryKey => <Column<Object>>{id};
 }
 
+/// How much a person paid towards a bill.
+@DataClassName('PaymentRow')
+class Payments extends Table {
+  /// Synthetic UUID primary key (`'{billId}:{personId}'`).
+  TextColumn get id => text()();
+
+  /// Owning bill id.
+  TextColumn get billId => text()();
+
+  /// The paying person id.
+  TextColumn get personId => text()();
+
+  /// Amount paid, in currency units.
+  RealColumn get amount => real()();
+
+  @override
+  Set<Column<Object>> get primaryKey => <Column<Object>>{id};
+}
+
 /// The application's Drift/SQLite database.
 @DriftDatabase(
-  tables: <Type>[Bills, Items, People, Splits],
+  tables: <Type>[Bills, Items, People, Splits, Payments],
   daos: <Type>[BillDao, PersonDao],
 )
 class AppDatabase extends _$AppDatabase {
@@ -112,7 +131,18 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (Migrator m) => m.createAll(),
+        onUpgrade: (Migrator m, int from, int to) async {
+          // v2 adds the Payments table for settle-up tracking.
+          if (from < 2) {
+            await m.createTable(payments);
+          }
+        },
+      );
 
   static QueryExecutor _openConnection() {
     return LazyDatabase(() async {

@@ -51,6 +51,15 @@ Map<String, dynamic> _$$SplitImplToJson(_$SplitImpl instance) =>
       'portionDenominator': instance.portionDenominator,
     };
 
+_$PaymentImpl _$$PaymentImplFromJson(Map<String, dynamic> json) =>
+    _$PaymentImpl(
+      personId: json['personId'] as String,
+      amount: (json['amount'] as num).toDouble(),
+    );
+
+Map<String, dynamic> _$$PaymentImplToJson(_$PaymentImpl instance) =>
+    <String, dynamic>{'personId': instance.personId, 'amount': instance.amount};
+
 _$BillImpl _$$BillImplFromJson(Map<String, dynamic> json) => _$BillImpl(
   id: json['id'] as String,
   name: json['name'] as String,
@@ -70,6 +79,11 @@ _$BillImpl _$$BillImplFromJson(Map<String, dynamic> json) => _$BillImpl(
           ?.map((e) => Split.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const <Split>[],
+  payments:
+      (json['payments'] as List<dynamic>?)
+          ?.map((e) => Payment.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const <Payment>[],
   taxAmount: (json['taxAmount'] as num?)?.toDouble() ?? 0,
   tipAmount: (json['tipAmount'] as num?)?.toDouble() ?? 0,
   currency: json['currency'] as String? ?? 'USD',
@@ -83,6 +97,7 @@ Map<String, dynamic> _$$BillImplToJson(_$BillImpl instance) =>
       'items': instance.items,
       'people': instance.people,
       'splits': instance.splits,
+      'payments': instance.payments,
       'taxAmount': instance.taxAmount,
       'tipAmount': instance.tipAmount,
       'currency': instance.currency,

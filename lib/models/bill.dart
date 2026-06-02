@@ -86,6 +86,25 @@ class Split with _$Split {
   factory Split.fromJson(Map<String, dynamic> json) => _$SplitFromJson(json);
 }
 
+/// How much a given [Person] actually paid towards the bill. Used to settle up
+/// after the fact: a person's net balance is what they paid minus what they
+/// owe.
+@freezed
+class Payment with _$Payment {
+  /// Creates a [Payment].
+  const factory Payment({
+    /// The paying person's id.
+    required String personId,
+
+    /// The amount this person paid, in currency units.
+    required double amount,
+  }) = _Payment;
+
+  /// Deserializes a [Payment] from JSON.
+  factory Payment.fromJson(Map<String, dynamic> json) =>
+      _$PaymentFromJson(json);
+}
+
 /// Top-level container for a single receipt-splitting session.
 @freezed
 class Bill with _$Bill {
@@ -109,6 +128,9 @@ class Bill with _$Bill {
     /// Item-to-person ownership fractions.
     @Default(<Split>[]) List<Split> splits,
 
+    /// How much each person actually paid towards the bill.
+    @Default(<Payment>[]) List<Payment> payments,
+
     /// Total tax charged on the bill.
     @Default(0) double taxAmount,
 
@@ -130,4 +152,8 @@ class Bill with _$Bill {
 
   /// Grand total including tax and tip.
   double get total => subtotal + taxAmount + tipAmount;
+
+  /// Sum of all amounts people have paid towards the bill.
+  double get totalPaid =>
+      payments.fold(0, (double sum, Payment p) => sum + p.amount);
 }

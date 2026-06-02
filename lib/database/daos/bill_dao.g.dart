@@ -8,4 +8,5 @@ mixin _$BillDaoMixin on DatabaseAccessor<AppDatabase> {
   $ItemsTable get items => attachedDatabase.items;
   $PeopleTable get people => attachedDatabase.people;
   $SplitsTable get splits => attachedDatabase.splits;
+  $PaymentsTable get payments => attachedDatabase.payments;
 }

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'screens/assign/assign_screen.dart';
 import 'screens/home/home_screen.dart';
+import 'screens/payments/payments_screen.dart';
 import 'screens/people/people_screen.dart';
 import 'screens/review_items/review_items_screen.dart';
 import 'screens/scan/scan_screen.dart';
@@ -18,6 +19,7 @@ class Routes {
   static const String review = '/review';
   static const String people = '/people';
   static const String assign = '/assign';
+  static const String payments = '/payments';
   static const String summary = '/summary';
   static const String settings = '/settings';
 }
@@ -49,6 +51,11 @@ final GoRouter _router = GoRouter(
       path: Routes.assign,
       builder: (BuildContext context, GoRouterState state) =>
           const AssignScreen(),
+    ),
+    GoRoute(
+      path: Routes.payments,
+      builder: (BuildContext context, GoRouterState state) =>
+          const PaymentsScreen(),
     ),
     GoRoute(
       path: Routes.summary,

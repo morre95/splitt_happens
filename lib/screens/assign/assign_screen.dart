@@ -38,8 +38,8 @@ class AssignScreen extends ConsumerWidget {
             onPressed: controller.splitEqually,
           ),
           TextButton(
-            onPressed: () => context.push(Routes.summary),
-            child: const Text('Summary'),
+            onPressed: () => context.push(Routes.payments),
+            child: const Text('Next'),
           ),
         ],
       ),

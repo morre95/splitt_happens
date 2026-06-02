@@ -703,6 +703,179 @@ abstract class _Split implements Split {
       throw _privateConstructorUsedError;
 }
 
+Payment _$PaymentFromJson(Map<String, dynamic> json) {
+  return _Payment.fromJson(json);
+}
+
+/// @nodoc
+mixin _$Payment {
+  /// The paying person's id.
+  String get personId => throw _privateConstructorUsedError;
+
+  /// The amount this person paid, in currency units.
+  double get amount => throw _privateConstructorUsedError;
+
+  /// Serializes this Payment to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of Payment
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $PaymentCopyWith<Payment> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $PaymentCopyWith<$Res> {
+  factory $PaymentCopyWith(Payment value, $Res Function(Payment) then) =
+      _$PaymentCopyWithImpl<$Res, Payment>;
+  @useResult
+  $Res call({String personId, double amount});
+}
+
+/// @nodoc
+class _$PaymentCopyWithImpl<$Res, $Val extends Payment>
+    implements $PaymentCopyWith<$Res> {
+  _$PaymentCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of Payment
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({Object? personId = null, Object? amount = null}) {
+    return _then(
+      _value.copyWith(
+            personId: null == personId
+                ? _value.personId
+                : personId // ignore: cast_nullable_to_non_nullable
+                      as String,
+            amount: null == amount
+                ? _value.amount
+                : amount // ignore: cast_nullable_to_non_nullable
+                      as double,
+          )
+          as $Val,
+    );
+  }
+}
+
+/// @nodoc
+abstract class _$$PaymentImplCopyWith<$Res> implements $PaymentCopyWith<$Res> {
+  factory _$$PaymentImplCopyWith(
+    _$PaymentImpl value,
+    $Res Function(_$PaymentImpl) then,
+  ) = __$$PaymentImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({String personId, double amount});
+}
+
+/// @nodoc
+class __$$PaymentImplCopyWithImpl<$Res>
+    extends _$PaymentCopyWithImpl<$Res, _$PaymentImpl>
+    implements _$$PaymentImplCopyWith<$Res> {
+  __$$PaymentImplCopyWithImpl(
+    _$PaymentImpl _value,
+    $Res Function(_$PaymentImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of Payment
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({Object? personId = null, Object? amount = null}) {
+    return _then(
+      _$PaymentImpl(
+        personId: null == personId
+            ? _value.personId
+            : personId // ignore: cast_nullable_to_non_nullable
+                  as String,
+        amount: null == amount
+            ? _value.amount
+            : amount // ignore: cast_nullable_to_non_nullable
+                  as double,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$PaymentImpl implements _Payment {
+  const _$PaymentImpl({required this.personId, required this.amount});
+
+  factory _$PaymentImpl.fromJson(Map<String, dynamic> json) =>
+      _$$PaymentImplFromJson(json);
+
+  /// The paying person's id.
+  @override
+  final String personId;
+
+  /// The amount this person paid, in currency units.
+  @override
+  final double amount;
+
+  @override
+  String toString() {
+    return 'Payment(personId: $personId, amount: $amount)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$PaymentImpl &&
+            (identical(other.personId, personId) ||
+                other.personId == personId) &&
+            (identical(other.amount, amount) || other.amount == amount));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, personId, amount);
+
+  /// Create a copy of Payment
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$PaymentImplCopyWith<_$PaymentImpl> get copyWith =>
+      __$$PaymentImplCopyWithImpl<_$PaymentImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$PaymentImplToJson(this);
+  }
+}
+
+abstract class _Payment implements Payment {
+  const factory _Payment({
+    required final String personId,
+    required final double amount,
+  }) = _$PaymentImpl;
+
+  factory _Payment.fromJson(Map<String, dynamic> json) = _$PaymentImpl.fromJson;
+
+  /// The paying person's id.
+  @override
+  String get personId;
+
+  /// The amount this person paid, in currency units.
+  @override
+  double get amount;
+
+  /// Create a copy of Payment
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$PaymentImplCopyWith<_$PaymentImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 Bill _$BillFromJson(Map<String, dynamic> json) {
   return _Bill.fromJson(json);
 }
@@ -726,6 +899,9 @@ mixin _$Bill {
 
   /// Item-to-person ownership fractions.
   List<Split> get splits => throw _privateConstructorUsedError;
+
+  /// How much each person actually paid towards the bill.
+  List<Payment> get payments => throw _privateConstructorUsedError;
 
   /// Total tax charged on the bill.
   double get taxAmount => throw _privateConstructorUsedError;
@@ -757,6 +933,7 @@ abstract class $BillCopyWith<$Res> {
     List<Item> items,
     List<Person> people,
     List<Split> splits,
+    List<Payment> payments,
     double taxAmount,
     double tipAmount,
     String currency,
@@ -784,6 +961,7 @@ class _$BillCopyWithImpl<$Res, $Val extends Bill>
     Object? items = null,
     Object? people = null,
     Object? splits = null,
+    Object? payments = null,
     Object? taxAmount = null,
     Object? tipAmount = null,
     Object? currency = null,
@@ -814,6 +992,10 @@ class _$BillCopyWithImpl<$Res, $Val extends Bill>
                 ? _value.splits
                 : splits // ignore: cast_nullable_to_non_nullable
                       as List<Split>,
+            payments: null == payments
+                ? _value.payments
+                : payments // ignore: cast_nullable_to_non_nullable
+                      as List<Payment>,
             taxAmount: null == taxAmount
                 ? _value.taxAmount
                 : taxAmount // ignore: cast_nullable_to_non_nullable
@@ -847,6 +1029,7 @@ abstract class _$$BillImplCopyWith<$Res> implements $BillCopyWith<$Res> {
     List<Item> items,
     List<Person> people,
     List<Split> splits,
+    List<Payment> payments,
     double taxAmount,
     double tipAmount,
     String currency,
@@ -871,6 +1054,7 @@ class __$$BillImplCopyWithImpl<$Res>
     Object? items = null,
     Object? people = null,
     Object? splits = null,
+    Object? payments = null,
     Object? taxAmount = null,
     Object? tipAmount = null,
     Object? currency = null,
@@ -901,6 +1085,10 @@ class __$$BillImplCopyWithImpl<$Res>
             ? _value._splits
             : splits // ignore: cast_nullable_to_non_nullable
                   as List<Split>,
+        payments: null == payments
+            ? _value._payments
+            : payments // ignore: cast_nullable_to_non_nullable
+                  as List<Payment>,
         taxAmount: null == taxAmount
             ? _value.taxAmount
             : taxAmount // ignore: cast_nullable_to_non_nullable
@@ -928,12 +1116,14 @@ class _$BillImpl extends _Bill {
     final List<Item> items = const <Item>[],
     final List<Person> people = const <Person>[],
     final List<Split> splits = const <Split>[],
+    final List<Payment> payments = const <Payment>[],
     this.taxAmount = 0,
     this.tipAmount = 0,
     this.currency = 'USD',
   }) : _items = items,
        _people = people,
        _splits = splits,
+       _payments = payments,
        super._();
 
   factory _$BillImpl.fromJson(Map<String, dynamic> json) =>
@@ -987,6 +1177,18 @@ class _$BillImpl extends _Bill {
     return EqualUnmodifiableListView(_splits);
   }
 
+  /// How much each person actually paid towards the bill.
+  final List<Payment> _payments;
+
+  /// How much each person actually paid towards the bill.
+  @override
+  @JsonKey()
+  List<Payment> get payments {
+    if (_payments is EqualUnmodifiableListView) return _payments;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_payments);
+  }
+
   /// Total tax charged on the bill.
   @override
   @JsonKey()
@@ -1004,7 +1206,7 @@ class _$BillImpl extends _Bill {
 
   @override
   String toString() {
-    return 'Bill(id: $id, name: $name, date: $date, items: $items, people: $people, splits: $splits, taxAmount: $taxAmount, tipAmount: $tipAmount, currency: $currency)';
+    return 'Bill(id: $id, name: $name, date: $date, items: $items, people: $people, splits: $splits, payments: $payments, taxAmount: $taxAmount, tipAmount: $tipAmount, currency: $currency)';
   }
 
   @override
@@ -1018,6 +1220,7 @@ class _$BillImpl extends _Bill {
             const DeepCollectionEquality().equals(other._items, _items) &&
             const DeepCollectionEquality().equals(other._people, _people) &&
             const DeepCollectionEquality().equals(other._splits, _splits) &&
+            const DeepCollectionEquality().equals(other._payments, _payments) &&
             (identical(other.taxAmount, taxAmount) ||
                 other.taxAmount == taxAmount) &&
             (identical(other.tipAmount, tipAmount) ||
@@ -1036,6 +1239,7 @@ class _$BillImpl extends _Bill {
     const DeepCollectionEquality().hash(_items),
     const DeepCollectionEquality().hash(_people),
     const DeepCollectionEquality().hash(_splits),
+    const DeepCollectionEquality().hash(_payments),
     taxAmount,
     tipAmount,
     currency,
@@ -1063,6 +1267,7 @@ abstract class _Bill extends Bill {
     final List<Item> items,
     final List<Person> people,
     final List<Split> splits,
+    final List<Payment> payments,
     final double taxAmount,
     final double tipAmount,
     final String currency,
@@ -1094,6 +1299,10 @@ abstract class _Bill extends Bill {
   /// Item-to-person ownership fractions.
   @override
   List<Split> get splits;
+
+  /// How much each person actually paid towards the bill.
+  @override
+  List<Payment> get payments;
 
   /// Total tax charged on the bill.
   @override
