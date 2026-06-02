@@ -47,7 +47,22 @@ class SummaryScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Summary'),
+        title: GestureDetector(
+          onTap: () => _editName(context, ref),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Flexible(
+                child: Text(
+                  bill.name,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 6),
+              const Icon(Icons.edit_outlined, size: 18),
+            ],
+          ),
+        ),
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.save_outlined),
@@ -141,6 +156,17 @@ class SummaryScreen extends ConsumerWidget {
         total: totals[person.id] ?? 0,
       );
     }).toList();
+  }
+
+  Future<void> _editName(BuildContext context, WidgetRef ref) async {
+    final Bill bill = ref.read(billControllerProvider).requireValue;
+    final String? name = await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) => _EditNameDialog(initialName: bill.name),
+    );
+    if (name != null && name.isNotEmpty) {
+      ref.read(billControllerProvider.notifier).setName(name);
+    }
   }
 
   Future<void> _save(BuildContext context, WidgetRef ref) async {
@@ -267,6 +293,55 @@ class _GrandTotalBar extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Dialog for renaming the bill. Owns its [TextEditingController] so it is
+/// disposed with the dialog route, and returns the trimmed name, or `null` on
+/// cancel.
+class _EditNameDialog extends StatefulWidget {
+  const _EditNameDialog({required this.initialName});
+
+  final String initialName;
+
+  @override
+  State<_EditNameDialog> createState() => _EditNameDialogState();
+}
+
+class _EditNameDialogState extends State<_EditNameDialog> {
+  late final TextEditingController _name =
+      TextEditingController(text: widget.initialName);
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  void _submit() => Navigator.of(context).pop(_name.text.trim());
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Rename bill'),
+      content: TextField(
+        controller: _name,
+        autofocus: true,
+        textCapitalization: TextCapitalization.sentences,
+        decoration: const InputDecoration(labelText: 'Bill name'),
+        onSubmitted: (_) => _submit(),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _submit,
+          child: const Text('Save'),
+        ),
+      ],
     );
   }
 }
