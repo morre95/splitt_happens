@@ -80,9 +80,10 @@ class ReviewItemsScreen extends ConsumerWidget {
                     },
                   ),
           ),
-          _SummaryRow(bill: bill, onEditTaxTip: () => _editTaxTip(context, ref)),
         ],
       ),
+      bottomNavigationBar:
+          _SummaryRow(bill: bill, onEditTaxTip: () => _editTaxTip(context, ref)),
       floatingActionButton: FloatingActionButton(
         onPressed: () => controller.addItem(
           Item(id: _uuid.v4(), name: 'New item', unitPrice: 0),
@@ -187,6 +188,7 @@ class _SummaryRow extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               _line(context, 'Subtotal', bill.subtotal),
               _line(context, 'Tax', bill.taxAmount),
