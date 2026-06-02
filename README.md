@@ -40,7 +40,7 @@ flutter doctor
 flutter pub get
 
 # 2. Generate code (Freezed models, json_serializable, Drift, Riverpod)
-dart run build_runner build --delete-conflicting-outputs
+
 ```
 
 > Re-run the `build_runner` command whenever you change a `@freezed` model, a
