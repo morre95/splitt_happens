@@ -175,6 +175,7 @@ class SummaryScreen extends ConsumerWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Bill saved')),
     );
+    context.go(Routes.home);
   }
 
   Future<void> _shareText(Bill bill, List<PersonBreakdown> breakdowns,
