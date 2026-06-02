@@ -96,53 +96,80 @@ class ReviewItemsScreen extends ConsumerWidget {
 
   Future<void> _editTaxTip(BuildContext context, WidgetRef ref) async {
     final Bill bill = ref.read(billControllerProvider).requireValue;
-    final TextEditingController taxCtrl =
-        TextEditingController(text: bill.taxAmount.toStringAsFixed(2));
-    final TextEditingController tipCtrl =
-        TextEditingController(text: bill.tipAmount.toStringAsFixed(2));
-
-    final bool? saved = await showDialog<bool>(
+    final (double, double)? result = await showDialog<(double, double)>(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: const Text('Edit tax & tip'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            TextField(
-              controller: taxCtrl,
-              decoration: const InputDecoration(labelText: 'Tax'),
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-            ),
-            TextField(
-              controller: tipCtrl,
-              decoration: const InputDecoration(labelText: 'Tip'),
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-            ),
-          ],
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+      builder: (BuildContext context) => _TaxTipDialog(
+        initialTax: bill.taxAmount,
+        initialTip: bill.tipAmount,
+      ),
+    );
+    if (result != null) {
+      ref
+          .read(billControllerProvider.notifier)
+          .setTaxTip(result.$1, result.$2);
+    }
+  }
+}
+
+/// Dialog for editing the bill's tax and tip. Owns its [TextEditingController]s
+/// so they are disposed with the dialog route (not while it is still animating
+/// out), and returns the entered `(tax, tip)` values, or `null` on cancel.
+class _TaxTipDialog extends StatefulWidget {
+  const _TaxTipDialog({required this.initialTax, required this.initialTip});
+
+  final double initialTax;
+  final double initialTip;
+
+  @override
+  State<_TaxTipDialog> createState() => _TaxTipDialogState();
+}
+
+class _TaxTipDialogState extends State<_TaxTipDialog> {
+  late final TextEditingController _tax =
+      TextEditingController(text: widget.initialTax.toStringAsFixed(2));
+  late final TextEditingController _tip =
+      TextEditingController(text: widget.initialTip.toStringAsFixed(2));
+
+  @override
+  void dispose() {
+    _tax.dispose();
+    _tip.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit tax & tip'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          TextField(
+            controller: _tax,
+            decoration: const InputDecoration(labelText: 'Tax'),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Save'),
+          TextField(
+            controller: _tip,
+            decoration: const InputDecoration(labelText: 'Tip'),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
         ],
       ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop((
+            double.tryParse(_tax.text) ?? widget.initialTax,
+            double.tryParse(_tip.text) ?? widget.initialTip,
+          )),
+          child: const Text('Save'),
+        ),
+      ],
     );
-
-    if (saved ?? false) {
-      ref.read(billControllerProvider.notifier).setTaxTip(
-            double.tryParse(taxCtrl.text) ?? bill.taxAmount,
-            double.tryParse(tipCtrl.text) ?? bill.tipAmount,
-          );
-    }
-    taxCtrl.dispose();
-    tipCtrl.dispose();
   }
 }
 
