@@ -23,14 +23,20 @@ def _base_url() -> str:
 
 
 async def _post(client: httpx.AsyncClient, path: str, json: dict[str, Any]) -> dict[str, Any]:
-    resp = await client.post(f"{_base_url()}{path}", headers=_admin_headers(), json=json)
+    try:
+        resp = await client.post(f"{_base_url()}{path}", headers=_admin_headers(), json=json)
+    except httpx.RequestError as error:
+        raise UpstreamError(f"Could not reach LiteLLM at {path}: {error}") from error
     if resp.status_code >= 400:
         raise UpstreamError(f"LiteLLM {path} failed ({resp.status_code}): {resp.text[:300]}")
     return resp.json()
 
 
 async def _get(client: httpx.AsyncClient, path: str, params: dict[str, Any]) -> dict[str, Any]:
-    resp = await client.get(f"{_base_url()}{path}", headers=_admin_headers(), params=params)
+    try:
+        resp = await client.get(f"{_base_url()}{path}", headers=_admin_headers(), params=params)
+    except httpx.RequestError as error:
+        raise UpstreamError(f"Could not reach LiteLLM at {path}: {error}") from error
     if resp.status_code >= 400:
         raise UpstreamError(f"LiteLLM {path} failed ({resp.status_code}): {resp.text[:300]}")
     return resp.json()
@@ -85,12 +91,15 @@ async def reset_user_spend(user_id: str) -> None:
 
 async def get_spend_logs(user_id: str) -> list[dict[str, Any]]:
     """Return recent spend log rows for a user (activity feed)."""
-    async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
-        resp = await client.get(
-            f"{_base_url()}/spend/logs",
-            headers=_admin_headers(),
-            params={"user_id": user_id},
-        )
+    try:
+        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+            resp = await client.get(
+                f"{_base_url()}/spend/logs",
+                headers=_admin_headers(),
+                params={"user_id": user_id},
+            )
+    except httpx.RequestError:
+        return []
     if resp.status_code >= 400:
         # Activity log is best-effort; don't fail the whole dashboard for it.
         return []
@@ -103,12 +112,15 @@ async def chat_completion(virtual_key: str, body: dict[str, Any]) -> dict[str, A
 
     Maps LiteLLM's budget-exceeded response to a clean BUDGET_EXCEEDED error.
     """
-    async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
-        resp = await client.post(
-            f"{_base_url()}/chat/completions",
-            headers={"Authorization": f"Bearer {virtual_key}"},
-            json=body,
-        )
+    try:
+        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+            resp = await client.post(
+                f"{_base_url()}/chat/completions",
+                headers={"Authorization": f"Bearer {virtual_key}"},
+                json=body,
+            )
+    except httpx.RequestError as error:
+        raise UpstreamError(f"Could not reach the LLM service: {error}") from error
     if resp.status_code == 200:
         return resp.json()
 

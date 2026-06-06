@@ -7,8 +7,11 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+      # Second database for the FastAPI app, created by the init script below.
+      APP_DB: ${APP_DB:-splitt_app}
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
@@ -21,7 +24,8 @@ services:
     environment:
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
-      DATABASE_URL: ${DATABASE_URL}
+      # LiteLLM owns the ${POSTGRES_DB} database (Prisma-managed).
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
     volumes:
       - ./litellm/config.yaml:/app/config.yaml:ro
     depends_on:
@@ -38,6 +42,9 @@ services:
   fastapi:
     build: ./app
     env_file: .env
+    environment:
+      # The app uses its OWN database (Alembic-managed), isolated from LiteLLM's.
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${APP_DB:-splitt_app}
     depends_on:
       postgres:
         condition: service_healthy
