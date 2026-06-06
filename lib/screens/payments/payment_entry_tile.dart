@@ -43,6 +43,17 @@ class _PaymentEntryTileState extends State<PaymentEntryTile> {
   }
 
   @override
+  void didUpdateWidget(PaymentEntryTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reflect amounts set elsewhere (e.g. the default payer seed) in the field,
+    // but leave the field alone while the user is editing it themselves.
+    final double current = double.tryParse(_amount.text) ?? 0;
+    if (widget.amount != current) {
+      _amount.text = widget.amount == 0 ? '' : widget.amount.toStringAsFixed(2);
+    }
+  }
+
+  @override
   void dispose() {
     _amount.dispose();
     super.dispose();

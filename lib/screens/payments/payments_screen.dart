@@ -11,12 +11,27 @@ import 'payment_entry_tile.dart';
 
 /// Records how much each person actually paid towards the bill, so the summary
 /// can settle up who owes whom.
-class PaymentsScreen extends ConsumerWidget {
+class PaymentsScreen extends ConsumerStatefulWidget {
   /// Creates a [PaymentsScreen].
   const PaymentsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PaymentsScreen> createState() => _PaymentsScreenState();
+}
+
+class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Default the first person added as having paid the whole bill, so the
+    // common "one person covered it" case needs no manual entry.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(billControllerProvider.notifier).seedDefaultPayer();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final Bill? bill = ref.watch(billControllerProvider).valueOrNull;
     if (bill == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));

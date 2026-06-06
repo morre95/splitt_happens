@@ -40,6 +40,8 @@ Point a debug build of the app at it (see the app instructions below):
 ```bash
 flutter run --dart-define=BACKEND_BASE_URL=http://10.0.2.2:8000   # Android emulator
 flutter run --dart-define=BACKEND_BASE_URL=http://localhost:8000  # desktop / web / iOS sim
+
+flutter run --dart-define=BACKEND_BASE_URL=https://splitt.103.141.13.100.nip.io # run on remote test server
 ```
 
 ## Run in production

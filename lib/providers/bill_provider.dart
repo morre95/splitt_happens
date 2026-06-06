@@ -292,6 +292,21 @@ class BillController extends _$BillController {
     _set(bill.copyWith(splits: splits));
   }
 
+  /// Seeds the first person added as having paid the whole bill, used to
+  /// pre-fill the payments screen when nothing has been recorded yet. No-op if
+  /// any payment already exists or there are no people.
+  void seedDefaultPayer() {
+    final Bill? bill = _bill;
+    if (bill == null || bill.people.isEmpty || bill.payments.isNotEmpty) {
+      return;
+    }
+    _set(bill.copyWith(
+      payments: <Payment>[
+        Payment(personId: bill.people.first.id, amount: bill.total),
+      ],
+    ));
+  }
+
   /// Records that [personId] paid [amount] towards the bill, replacing any
   /// previous amount for that person. A non-positive [amount] removes their
   /// payment entirely.
