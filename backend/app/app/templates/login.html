@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Admin Login{% endblock %}
+{% block content %}
+  <h1>Split Happens Admin</h1>
+  <div class="card" style="max-width:320px;">
+    <form method="post" action="/admin/login">
+      <label class="muted" for="password">Admin password</label><br>
+      <input type="password" id="password" name="password" autofocus style="width:100%; margin:10px 0;">
+      <button type="submit" style="width:100%;">Sign in</button>
+      {% if error %}<div class="err">{{ error }}</div>{% endif %}
+    </form>
+  </div>
+{% endblock %}

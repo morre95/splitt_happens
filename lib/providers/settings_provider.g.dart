@@ -6,12 +6,10 @@ part of 'settings_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$settingsHash() => r'1018dac3e7c7f76b1fc7e6e1d1da449a439a6453';
+String _$settingsHash() => r'72243293546f5f78b729cedbda98820ad79d28a8';
 
-/// Loads and persists [AppSettings]. The OpenRouter API key is kept in
-/// platform-encrypted secure storage (Keychain / KeyStore via RSA OAEP +
-/// AES-GCM); the non-sensitive model and currency preferences live in
-/// `SharedPreferences`.
+/// Loads and persists [AppSettings]. Both the model and currency preferences
+/// are non-sensitive and live in `SharedPreferences`.
 ///
 /// Copied from [Settings].
 @ProviderFor(Settings)

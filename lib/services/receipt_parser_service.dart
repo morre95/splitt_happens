@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import '../core/constants.dart';
 import '../core/exceptions.dart';
 import '../models/receipt_parse_result.dart';
+import 'backend_client.dart';
 
 /// System prompt instructing the LLM to return strict JSON for a receipt.
 const String _systemPrompt = '''
@@ -26,58 +27,39 @@ Rules:
 - If tax, tip, or subtotal are not found, set them to 0.
 - Do not include header lines, store name, address, phone number, or payment method lines as items.''';
 
-/// Converts raw OCR text into a structured [ReceiptParseResult] using the
-/// OpenRouter chat-completions API.
+/// Converts raw OCR text into a structured [ReceiptParseResult] by calling the
+/// Split Happens backend, which proxies the request through LiteLLM.
 class ReceiptParserService {
   /// Creates a [ReceiptParserService].
   ///
-  /// An [http.Client] and the [model] may be injected for testing; both fall
-  /// back to sensible defaults.
+  /// An [http.Client], [BackendClient], and the [model] may be injected for
+  /// testing; all fall back to sensible defaults.
   ReceiptParserService({
     http.Client? client,
-    this.model = OpenRouterConfig.defaultModel,
-  }) : _client = client ?? http.Client();
+    BackendClient? backend,
+    this.model = BackendConfig.defaultModel,
+  })  : _client = client ?? http.Client(),
+        _backend = backend ?? BackendClient(client: client);
 
   final http.Client _client;
+  final BackendClient _backend;
 
-  /// The OpenRouter model id used for parsing.
+  /// The model id used for parsing (forwarded to the backend).
   final String model;
 
-  /// Parses [ocrText] into a [ReceiptParseResult] using [apiKey] for auth.
+  /// Parses [ocrText] into a [ReceiptParseResult].
   ///
-  /// Throws [NetworkException] on timeout or transport failure, and
-  /// [ParseException] when the response is malformed or contains no items.
-  Future<ReceiptParseResult> parse(String ocrText, String apiKey) async {
-    final Uri uri = Uri.parse(OpenRouterConfig.chatCompletionsUrl);
-    final Map<String, dynamic> payload = <String, dynamic>{
-      'model': model,
-      'temperature': OpenRouterConfig.temperature,
-      'messages': <Map<String, String>>[
-        <String, String>{'role': 'system', 'content': _systemPrompt},
-        <String, String>{'role': 'user', 'content': ocrText},
-      ],
-    };
+  /// Authentication uses the backend app token; if the token is rejected it is
+  /// refreshed once and the request retried. Throws [NetworkException] on
+  /// timeout or transport failure, and [ParseException] when the response is
+  /// malformed or contains no items.
+  Future<ReceiptParseResult> parse(String ocrText) async {
+    http.Response response = await _post(ocrText, await _backend.ensureToken());
 
-    final http.Response response;
-    try {
-      response = await _client
-          .post(
-            uri,
-            headers: <String, String>{
-              'Authorization': 'Bearer $apiKey',
-              'HTTP-Referer': OpenRouterConfig.httpReferer,
-              'Content-Type': 'application/json',
-            },
-            body: jsonEncode(payload),
-          )
-          .timeout(OpenRouterConfig.requestTimeout);
-    } on TimeoutException catch (error) {
-      throw NetworkException(
-        'Parsing timed out. Check your connection or try a different model.',
-        error,
-      );
-    } catch (error) {
-      throw NetworkException('Failed to reach the parsing service.', error);
+    // The backend returns 401 when the app token has expired/rotated. Refresh
+    // it (same device → same user, so budget/spend persist) and retry once.
+    if (response.statusCode == 401) {
+      response = await _post(ocrText, await _backend.refreshToken());
     }
 
     if (response.statusCode != 200) {
@@ -91,7 +73,42 @@ class ReceiptParserService {
     return _decode(response.body);
   }
 
-  /// Decodes the OpenRouter envelope, extracts the model's message content,
+  /// Posts the OCR text to the backend chat-completions proxy using [token].
+  Future<http.Response> _post(String ocrText, String token) async {
+    final Uri uri = Uri.parse(
+      '${BackendConfig.baseUrl}${BackendConfig.chatCompletionsPath}',
+    );
+    final Map<String, dynamic> payload = <String, dynamic>{
+      'model': model,
+      'temperature': BackendConfig.temperature,
+      'messages': <Map<String, String>>[
+        <String, String>{'role': 'system', 'content': _systemPrompt},
+        <String, String>{'role': 'user', 'content': ocrText},
+      ],
+    };
+
+    try {
+      return await _client
+          .post(
+            uri,
+            headers: <String, String>{
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode(payload),
+          )
+          .timeout(BackendConfig.requestTimeout);
+    } on TimeoutException catch (error) {
+      throw NetworkException(
+        'Parsing timed out. Check your connection or try a different model.',
+        error,
+      );
+    } catch (error) {
+      throw NetworkException('Failed to reach the parsing service.', error);
+    }
+  }
+
+  /// Decodes the OpenAI-compatible envelope, extracts the model's message,
   /// and validates the embedded JSON.
   ReceiptParseResult _decode(String body) {
     final String content;

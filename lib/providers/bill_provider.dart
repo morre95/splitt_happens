@@ -94,8 +94,7 @@ class BillController extends _$BillController {
       final String ocrText = await ref.read(ocrTextProvider(image).future);
       final ReceiptParserService parser =
           ReceiptParserService(model: settings.model);
-      final ReceiptParseResult parsed =
-          await parser.parse(ocrText, settings.apiKey);
+      final ReceiptParseResult parsed = await parser.parse(ocrText);
       _parsedSubtotal = parsed.subtotal;
 
       final List<Item> items = parsed.items
@@ -129,8 +128,7 @@ class BillController extends _$BillController {
     final String ocrText = await ref.read(ocrTextProvider(image).future);
     final ReceiptParserService parser =
         ReceiptParserService(model: settings.model);
-    final ReceiptParseResult parsed =
-        await parser.parse(ocrText, settings.apiKey);
+    final ReceiptParseResult parsed = await parser.parse(ocrText);
 
     // The full-bill subtotal warning compares against a single scan, so it no
     // longer applies once items from another receipt are mixed in.

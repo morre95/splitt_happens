@@ -1,0 +1,15 @@
+# Secrets — never commit real values (use .env.example as the template)
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Postgres volume (if ever bind-mounted locally)
+pgdata/

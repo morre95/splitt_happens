@@ -5,7 +5,11 @@ import '../../core/constants.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/error_retry_view.dart';
 
-/// Lets the user enter their OpenRouter API key and pick a parsing model.
+/// Lets the user pick a parsing model and display currency.
+///
+/// Authentication is handled automatically by the backend in the testing
+/// phase — the device registers itself on first use, so there is no API key to
+/// enter here.
 class SettingsScreen extends ConsumerWidget {
   /// Creates a [SettingsScreen].
   const SettingsScreen({super.key});
@@ -27,65 +31,26 @@ class SettingsScreen extends ConsumerWidget {
   }
 }
 
-class _SettingsForm extends ConsumerStatefulWidget {
+class _SettingsForm extends ConsumerWidget {
   const _SettingsForm({required this.settings});
 
   final AppSettings settings;
 
   @override
-  ConsumerState<_SettingsForm> createState() => _SettingsFormState();
-}
-
-class _SettingsFormState extends ConsumerState<_SettingsForm> {
-  late final TextEditingController _apiKey;
-  bool _obscure = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _apiKey = TextEditingController(text: widget.settings.apiKey);
-  }
-
-  @override
-  void dispose() {
-    _apiKey.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final Settings notifier = ref.read(settingsProvider.notifier);
     return ListView(
       padding: const EdgeInsets.all(16),
       children: <Widget>[
-        Text(
-          'OpenRouter API key',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _apiKey,
-          obscureText: _obscure,
-          decoration: InputDecoration(
-            border: const OutlineInputBorder(),
-            hintText: 'sk-or-...',
-            suffixIcon: IconButton(
-              icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
-              onPressed: () => setState(() => _obscure = !_obscure),
-            ),
-          ),
-          onChanged: notifier.setApiKey,
-        ),
-        const SizedBox(height: 24),
         Text(
           'Parsing model',
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          initialValue: widget.settings.model,
+          initialValue: settings.model,
           decoration: const InputDecoration(border: OutlineInputBorder()),
-          items: OpenRouterConfig.availableModels
+          items: BackendConfig.availableModels
               .map((String model) => DropdownMenuItem<String>(
                     value: model,
                     child: Text(model),

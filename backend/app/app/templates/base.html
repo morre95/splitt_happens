@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Split Happens Admin{% endblock %}</title>
+  <style>
+    :root { --bg:#0f1419; --card:#1a2029; --line:#2a323d; --fg:#e6e9ee; --muted:#8b95a3; --accent:#4f8cff; --danger:#ff5c5c; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui, -apple-system, sans-serif; background:var(--bg); color:var(--fg); }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+    h1 { font-size: 22px; margin: 0 0 24px; }
+    h2 { font-size: 16px; color: var(--muted); margin: 28px 0 12px; font-weight: 600; }
+    a { color: var(--accent); text-decoration: none; }
+    table { width:100%; border-collapse: collapse; background:var(--card); border-radius:10px; overflow:hidden; }
+    th, td { text-align:left; padding:12px 14px; border-bottom:1px solid var(--line); font-size:14px; }
+    th { color:var(--muted); font-weight:600; }
+    tr:last-child td { border-bottom:none; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:20px; margin-bottom:16px; }
+    .row { display:flex; gap:16px; flex-wrap:wrap; }
+    .stat { flex:1; min-width:140px; }
+    .stat .label { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
+    .stat .value { font-size:24px; margin-top:4px; }
+    input, button { font: inherit; }
+    input[type=number], input[type=password] { background:var(--bg); border:1px solid var(--line); color:var(--fg); border-radius:8px; padding:9px 11px; width:160px; }
+    button { background:var(--accent); color:#fff; border:none; border-radius:8px; padding:9px 16px; cursor:pointer; }
+    button.danger { background:var(--danger); }
+    form.inline { display:inline-flex; gap:8px; align-items:center; }
+    .muted { color:var(--muted); }
+    .err { color:var(--danger); margin-top:10px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">{% block content %}{% endblock %}</div>
+</body>
+</html>
