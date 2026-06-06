@@ -2,25 +2,30 @@
 
 A Flutter app that splits restaurant bills: photograph a receipt, extract the
 line items with on-device OCR (Google ML Kit), parse them into structured data
-with an LLM (via OpenRouter), assign items to people, and see who owes what —
-with tax and tip prorated automatically.
+with an LLM (via the **Split Happens backend**), assign items to people, and see
+who owes what — with tax and tip prorated automatically.
+
+The app talks to its own backend (`backend/`), which proxies LLM requests through
+LiteLLM and caps each user's spend at a default of **$5.00**. The device
+auto-registers on first use, so there is no API key to enter in the app.
 
 ## Tech stack
 
 - **Flutter** (Material 3) + **Riverpod** for state
 - **google_mlkit_text_recognition** — on-device, offline OCR
-- **OpenRouter** REST API for LLM parsing
+- **Split Happens backend** (FastAPI + LiteLLM + Postgres) for LLM parsing, budgets, and an admin dashboard — see [`backend/README.md`](backend/README.md)
 - **drift** (SQLite) for saved bills
 - **camera** / **image_picker** for capture, **pdf** / **printing** / **share_plus** for export
-- **flutter_secure_storage** for the API key
+- **flutter_secure_storage** for the device id and backend token
 
 ---
 
 ## Prerequisites
 
 - **Flutter SDK 3.44+** (Dart 3.12+). Check with `flutter --version`.
-- An **OpenRouter API key** — sign up at <https://openrouter.ai> and create a key
-  (entered in the app's Settings screen, not in code).
+- A **running Split Happens backend** (locally or in production) for the app to talk to.
+  See [Backend](#backend) below and [`backend/README.md`](backend/README.md). The
+  OpenRouter key now lives in the backend, not in the app.
 - For **Android**: Android Studio + an Android SDK (the app targets **minSdk 24**,
   Android 7.0+, required by ML Kit and secure storage).
 - For **iOS**: a Mac with **Xcode** and CocoaPods (`sudo gem install cocoapods`).
@@ -40,7 +45,7 @@ flutter doctor
 flutter pub get
 
 # 2. Generate code (Freezed models, json_serializable, Drift, Riverpod)
-
+dart run build_runner build --delete-conflicting-outputs
 ```
 
 > Re-run the `build_runner` command whenever you change a `@freezed` model, a
@@ -48,8 +53,40 @@ flutter pub get
 > you can use `dart run build_runner watch --delete-conflicting-outputs` to
 > regenerate automatically.
 
-After launching the app, open **Settings** and paste your OpenRouter API key
-before scanning a receipt.
+No API key is entered in the app. Make sure a backend is running and pass its URL
+at build time with `--dart-define=BACKEND_BASE_URL=...` (see [Backend](#backend)).
+The device registers itself the first time you scan a receipt.
+
+---
+
+## Backend
+
+The app requires the Split Happens backend (FastAPI + LiteLLM + Postgres) for LLM
+parsing and per-user budgets. Full local **and** production instructions are in
+[`backend/README.md`](backend/README.md). In short:
+
+**Run the backend locally** (needs Docker):
+
+```bash
+cd backend
+cp .env.example .env        # set OPENROUTER_API_KEY + secrets
+docker compose up --build
+```
+
+API: `http://localhost:8000` · Admin dashboard: `http://localhost:8000/admin`.
+
+**Point the app at a backend** with `--dart-define=BACKEND_BASE_URL`:
+
+```bash
+flutter run --dart-define=BACKEND_BASE_URL=http://10.0.2.2:8000          # Android emulator → host
+flutter run --dart-define=BACKEND_BASE_URL=http://localhost:8000         # desktop / web / iOS sim
+flutter build apk --release --dart-define=BACKEND_BASE_URL=https://api.yourdomain.com  # production
+```
+
+If `BACKEND_BASE_URL` is omitted it defaults to `http://10.0.2.2:8000` (the Android
+emulator's loopback to the host). For production, deploy the backend behind HTTPS —
+see the production section of [`backend/README.md`](backend/README.md) — and build the
+app with the public `https://` URL.
 
 ---
 
